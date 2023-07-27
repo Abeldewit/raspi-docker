@@ -1,0 +1,45 @@
+version: "3.6"
+services:
+  homebridge:
+    image: "homebridge/homebridge:latest"
+    container_name: "homebridge"
+    hostname: "raspberrypi"
+
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "1"
+        max-size: "10mb"
+
+    network_mode: "host"
+    expose:
+      - "8581/tcp"
+
+    restart: "always"
+
+    volumes:
+      - "/home/abel/raspi-docker/docker-volumes/homebridge:/homebridge"
+    
+  radarr:
+    image: "linuxserver/radarr:arm32v7-4.5.2"
+    ipc: "private"
+
+    logging:
+      driver: "json-file"
+      options: {}
+
+    network_mode: "bridge"
+    ports:
+      - "7878:7878"
+
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+
+    restart: "unless-stopped"
+    
+    volumes:
+      - "/mnt/NAS/Downloads:/downloads"
+      - "/mnt/NAS/Movies:/movies"
+      - "/home/abel/raspi-docker/docker-volumes/radarr/:/config"
