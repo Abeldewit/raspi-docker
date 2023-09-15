@@ -43,3 +43,27 @@ services:
       - "/mnt/NAS/Downloads:/downloads"
       - "/mnt/NAS/Movies:/movies"
       - "/home/abel/raspi-docker/docker-volumes/radarr/:/config"
+  
+  sonarr:
+    image: "linuxserver/sonarr:arm32v7-3.0.9"
+    ipc: "private"
+
+    logging:
+      driver: "json-file"
+      options: {}
+
+    network_mode: "bridge"
+    ports:
+      - ""
+    
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - TZ=Etc/UTC
+
+    restart: "unless-stopped"
+
+    volumes:
+      - "/mnt/NAS/Downloads:/downloads"
+      - "/mnt/NAS/Series:/series"
+      - "/home/abel/raspi-docker/docker-volumes/sonarr/:/config"
