@@ -67,3 +67,17 @@ services:
       - "/mnt/NAS/Downloads:/downloads"
       - "/mnt/NAS/Series:/series"
       - "/home/abel/raspi-docker/docker-volumes/sonarr/:/config"
+  
+  tailscale:
+    image: "tailscale/tailscale"
+    container_name: "tailscaled"
+    
+    network_mode: "host"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    env_file: ./tailscale.env
+
+    volumes:
+      - "/dev/net/tun:/dev/net/tun"
+      - "/var/lib:/var/lib"
