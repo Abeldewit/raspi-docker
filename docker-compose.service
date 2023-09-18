@@ -1,0 +1,14 @@
+[Unit]
+Description=Docker compose service starter
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/abel/raspi-docker
+ExecStart=/usr/bin/docker-compose -f /home/abel/raspi-docker/docker-compose.yaml up -d
+ExecStop=/usr/bin/docker-compose -f /home/abel/raspi-docker/docker-compose.yaml down
+
+[Install]
+WantedBy=multi-user.target
