@@ -4,80 +4,100 @@ services:
     image: "homebridge/homebridge:latest"
     container_name: "homebridge"
     hostname: "raspberrypi"
-
     logging:
       driver: "json-file"
       options:
         max-file: "1"
         max-size: "10mb"
-
     network_mode: "host"
     expose:
       - "8581/tcp"
-
     restart: "always"
-
     volumes:
       - "/home/abel/raspi-docker/docker-volumes/homebridge:/homebridge"
     
   radarr:
     image: "linuxserver/radarr:arm32v7-4.5.2"
     ipc: "private"
-
     logging:
       driver: "json-file"
       options: {}
-
     network_mode: "bridge"
     ports:
       - "7878:7878"
-
     environment:
-      - PUID=1000
-      - PGID=1000
+      - PUID=1002
+      - PGID=1023
       - TZ=Etc/UTC
-
     restart: "unless-stopped"
-    
     volumes:
-      - "/mnt/NAS/Downloads:/downloads"
-      - "/mnt/NAS/Movies:/movies"
+      - "/mnt/NAS/:/data"
       - "/home/abel/raspi-docker/docker-volumes/radarr/:/config"
   
   sonarr:
     image: "linuxserver/sonarr:arm32v7-3.0.9"
     ipc: "private"
-
     logging:
       driver: "json-file"
       options: {}
-
     network_mode: "bridge"
     ports:
       - "8989:8989"
-    
     environment:
       - PUID=1001
-      - PGID=1001
+      - PGID=1023
       - TZ=Etc/UTC
+    restart: "unless-stopped"
+    volumes:
+      - "/mnt/NAS/:/data"
+      - "/home/abel/raspi-docker/docker-volumes/sonarr/:/config"
 
+  bazarr:
+    image: "linuxserver/bazarr:arm32v7-1.2.2"
+    container_name: bazarr
+    environment:
+      - PUID=1004
+      - PGID=1023
+      - TZ=Etc/UTC
+    volumes:
+      - "/home/abel/raspi-docker/docker-volumes/bazarr:/config"
+      - "/mnt/NAS/Movies:/movies"
+      - "/mnt/NAS/Series:/tv"
+    ports:
+      - "6767:6767"
     restart: "unless-stopped"
 
+  jackett:
+    image: "linuxserver/jackett:arm32v7-0.21.352"
+    container_name: jackett
+    environment:
+      - PUID=1003
+      - PGID=1023
+      - TZ=Etc/UTC
     volumes:
+      - "/home/abel/raspi-docker/docker-volumes/jackett/:/config"
       - "/mnt/NAS/Downloads:/downloads"
-      - "/mnt/NAS/Series:/series"
-      - "/home/abel/raspi-docker/docker-volumes/sonarr/:/config"
-  
+    ports:
+      - "9117:9117"
+    restart: "unless-stopped"
+
+  flaresolverr:
+    image: "ghcr.io/flaresolverr/flaresolverr:latest"
+    container_name: "flaresolverr"
+    environment:
+      - LOG_LEVEL=info
+    ports:
+      - "8191:8191"
+    restart: "unless-stopped"
+
   tailscale:
     image: "tailscale/tailscale"
     container_name: "tailscaled"
-    
     network_mode: "host"
     cap_add:
       - NET_ADMIN
       - NET_RAW
     env_file: ./tailscale.env
-
     volumes:
       - "/dev/net/tun:/dev/net/tun"
       - "/var/lib:/var/lib"
