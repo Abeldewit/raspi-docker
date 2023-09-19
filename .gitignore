@@ -1,2 +1,3 @@
 docker-volumes/*
 tailscale.env
+*.swp

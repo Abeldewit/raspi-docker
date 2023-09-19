@@ -41,4 +41,8 @@ sudo systemctl daemon-reload
 sudo systemctl enable docker-compose.service
 sudo systemctl start docker-compose.service
 
+# Set up the daily backup for the service config files
+# Add a daily cron job for your script
+(crontab -l ; echo "0 0 * * * $(pwd)/backup/backup-script.sh") | crontab -
+
 echo "Finished setup! Docker services are running"

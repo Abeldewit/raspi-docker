@@ -1,0 +1,4 @@
+*/node_modules/*
+*/MediaCover/*
+*/cache/*
+*/transmission/*
