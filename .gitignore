@@ -1,4 +1,5 @@
 docker-volumes/*
-tailscale.env
 *.swp
-calibre.env
+.calibre.env
+.tailscale.env
+
