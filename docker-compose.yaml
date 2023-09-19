@@ -12,7 +12,7 @@ services:
       - /home/abel/raspi-docker/docker-volumes/homebridge:/homebridge
 
   sonarr:
-    image: linuxserver/sonarr:arm32v7-3.0.9
+    image: linuxserver/sonarr:latest
     container_name: sonarr
     ipc: private
     logging:
@@ -31,7 +31,7 @@ services:
       - /home/abel/raspi-docker/docker-volumes/sonarr/:/config
     
   radarr:
-    image: linuxserver/radarr:arm32v7-4.5.2
+    image: linuxserver/radarr:latest
     container_name: radarr
     ipc: private
     logging:
@@ -50,7 +50,7 @@ services:
       - /home/abel/raspi-docker/docker-volumes/radarr/:/config
 
   calibre:
-    image: linuxserver/calibre:arm32v7-6.12.0
+    image: linuxserver/calibre:latest
     container_name: calibre
     security_opt:
       - seccomp:unconfined
@@ -59,9 +59,10 @@ services:
       - PGID=1023
       - TZ=Etc/UTC
       - CUSTOM_USER=admin
-      - FILE__PASSWORD=calibre.env
+    env_file: ./.calibre.env
     volumes:
-      - /path/to/data:/config
+      - /home/abel/raspi-docker/docker-volumes/calibre:/config
+      - /mnt/NAS/Books:/books
     ports:
       - 8080:8080
       - 8181:8181
@@ -69,7 +70,7 @@ services:
     restart: unless-stopped
 
   bazarr:
-    image: linuxserver/bazarr:arm32v7-1.2.2
+    image: linuxserver/bazarr:latest
     container_name: bazarr
     environment:
       - PUID=1004
@@ -84,7 +85,7 @@ services:
     restart: unless-stopped
 
   readarr:
-    image: linuxserver/readarr:arm32v7-0.1.8-develop
+    image: linuxserver/readarr:latest
     container_name: readarr
     environment:
       - PUID=1005
@@ -99,7 +100,7 @@ services:
     restart: unless-stopped
 
   prowlarr:
-    image: linuxserver/prowlarr:arm32v7-1.5.2
+    image: linuxserver/prowlarr:latest
     container_name: prowlarr
     environment:
       - PUID=1006
@@ -127,7 +128,7 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
-    env_file: ./tailscale.env
+    env_file: ./.tailscale.env
     volumes:
       - /dev/net/tun:/dev/net/tun
       - /var/lib:/var/lib
