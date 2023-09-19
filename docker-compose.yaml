@@ -1,103 +1,133 @@
 version: "3.6"
 services:
   homebridge:
-    image: "homebridge/homebridge:latest"
-    container_name: "homebridge"
-    hostname: "raspberrypi"
+    image: homebridge/homebridge:latest
+    container_name: homebridge
+    hostname: raspberrypi
     logging:
-      driver: "json-file"
+      driver: json-file
       options:
-        max-file: "1"
-        max-size: "10mb"
-    network_mode: "host"
+        max-file: 1
+        max-size: 10mb
+    network_mode: host
     expose:
-      - "8581/tcp"
-    restart: "always"
+      - 8581/tcp
+    restart: always
     volumes:
-      - "/home/abel/raspi-docker/docker-volumes/homebridge:/homebridge"
-    
-  radarr:
-    image: "linuxserver/radarr:arm32v7-4.5.2"
-    ipc: "private"
-    logging:
-      driver: "json-file"
-      options: {}
-    network_mode: "bridge"
-    ports:
-      - "7878:7878"
-    environment:
-      - PUID=1002
-      - PGID=1023
-      - TZ=Etc/UTC
-    restart: "unless-stopped"
-    volumes:
-      - "/mnt/NAS/:/data"
-      - "/home/abel/raspi-docker/docker-volumes/radarr/:/config"
-  
+      - /home/abel/raspi-docker/docker-volumes/homebridge:/homebridge
+
   sonarr:
-    image: "linuxserver/sonarr:arm32v7-3.0.9"
-    ipc: "private"
+    image: linuxserver/sonarr:arm32v7-3.0.9
+    container_name: sonarr
+    ipc: private
     logging:
-      driver: "json-file"
+      driver: json-file
       options: {}
-    network_mode: "bridge"
+    network_mode: bridge
     ports:
-      - "8989:8989"
+      - 8989:8989
     environment:
       - PUID=1001
       - PGID=1023
       - TZ=Etc/UTC
-    restart: "unless-stopped"
+    restart: unless-stopped
     volumes:
-      - "/mnt/NAS/:/data"
-      - "/home/abel/raspi-docker/docker-volumes/sonarr/:/config"
-
-  bazarr:
-    image: "linuxserver/bazarr:arm32v7-1.2.2"
-    container_name: bazarr
+      - /mnt/NAS/:/data
+      - /home/abel/raspi-docker/docker-volumes/sonarr/:/config
+    
+  radarr:
+    image: linuxserver/radarr:arm32v7-4.5.2
+    container_name: radarr
+    ipc: private
+    logging:
+      driver: json-file
+      options: {}
+    network_mode: bridge
+    ports:
+      - 7878:7878
     environment:
-      - PUID=1004
+      - PUID=1002
       - PGID=1023
       - TZ=Etc/UTC
+    restart: unless-stopped
     volumes:
-      - "/home/abel/raspi-docker/docker-volumes/bazarr:/config"
-      - "/mnt/NAS/Movies:/movies"
-      - "/mnt/NAS/Series:/tv"
-    ports:
-      - "6767:6767"
-    restart: "unless-stopped"
+      - /mnt/NAS/:/data
+      - /home/abel/raspi-docker/docker-volumes/radarr/:/config
 
   jackett:
-    image: "linuxserver/jackett:arm32v7-0.21.352"
+    image: linuxserver/jackett:arm32v7-0.21.352
     container_name: jackett
     environment:
       - PUID=1003
       - PGID=1023
       - TZ=Etc/UTC
     volumes:
-      - "/home/abel/raspi-docker/docker-volumes/jackett/:/config"
-      - "/mnt/NAS/Downloads:/downloads"
+      - /home/abel/raspi-docker/docker-volumes/jackett/:/config
+      - /mnt/NAS/Downloads:/downloads
     ports:
-      - "9117:9117"
-    restart: "unless-stopped"
+      - 9117:9117
+    restart: unless-stopped
+
+  bazarr:
+    image: linuxserver/bazarr:arm32v7-1.2.2
+    container_name: bazarr
+    environment:
+      - PUID=1004
+      - PGID=1023
+      - TZ=Etc/UTC
+    volumes:
+      - /home/abel/raspi-docker/docker-volumes/bazarr:/config
+      - /mnt/NAS/Movies:/movies
+      - /mnt/NAS/Series:/tv
+    ports:
+      - 6767:6767
+    restart: unless-stopped
+
+  readarr:
+    image: linuxserver/readarr:arm32v7-0.1.8-develop
+    container_name: readarr
+    environment:
+      - PUID=1005
+      - PGID=1023
+      - TZ=Etc/UTC
+    volumes:
+      - /home/abel/raspi-docker/docker-volumes/readarr:/config
+      - /mnt/NAS/Books:/books
+      - /mnt/NAS/Downloads:/downloads
+    ports:
+      - 8787:8787
+    restart: unless-stopped
+
+  prowlarr:
+    image: linuxserver/prowlarr:arm32v7-1.5.2
+    container_name: prowlarr
+    environment:
+      - PUID=1006
+      - PGID=1023
+      - TZ=Etc/UTC
+    volumes:
+      - /home/abel/raspi-docker/docker-volumes/prowlarr:/config
+    ports:
+      - 9696:9696
+    restart: unless-stopped
 
   flaresolverr:
-    image: "ghcr.io/flaresolverr/flaresolverr:latest"
-    container_name: "flaresolverr"
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
     environment:
       - LOG_LEVEL=info
     ports:
-      - "8191:8191"
-    restart: "unless-stopped"
+      - 8191:8191
+    restart: unless-stopped
 
   tailscale:
-    image: "tailscale/tailscale"
-    container_name: "tailscaled"
-    network_mode: "host"
+    image: tailscale/tailscale
+    container_name: tailscaled
+    network_mode: host
     cap_add:
       - NET_ADMIN
       - NET_RAW
     env_file: ./tailscale.env
     volumes:
-      - "/dev/net/tun:/dev/net/tun"
-      - "/var/lib:/var/lib"
+      - /dev/net/tun:/dev/net/tun
+      - /var/lib:/var/lib

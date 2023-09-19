@@ -11,13 +11,15 @@ The IP for the NAS is asked during this script.
 Please change any file-paths in the `docker-compose.service` file to point to the correct `docker-compose.yaml`. 
 
 ### Services
-- Radarr
-- Sonarr
-- Bazarr
-- Jackett
-- Flaresolverr
-- Homebridge
-- Tailscale
+- **Radarr**: Movie management
+- **Sonarr**: TV management
+- **Bazarr**: Subtitle management
+- **Jackett**: Torrent indexer
+- **Readarr**: Book management
+- **Prowlarr**: Indexer management
+- **Flaresolverr**: Cloudflare captcha solver (for Jackett)
+- **Homebridge**: Extend Apple Homekit with 3rd party appliances 
+- **Tailscale**: Personal VPN
 
 
 
