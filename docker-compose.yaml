@@ -49,6 +49,24 @@ services:
       - /mnt/NAS/:/data
       - /home/abel/raspi-docker/docker-volumes/radarr/:/config
 
+  calibre:
+    image: linuxserver/calibre:arm32v7-6.12.0
+    container_name: calibre
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      - PUID=1003
+      - PGID=1023
+      - TZ=Etc/UTC
+      - CUSTOM_USER=admin
+      - FILE__PASSWORD=calibre.env
+    volumes:
+      - /path/to/data:/config
+    ports:
+      - 8080:8080
+      - 8181:8181
+      - 8081:8081
+    restart: unless-stopped
 
   bazarr:
     image: linuxserver/bazarr:arm32v7-1.2.2
