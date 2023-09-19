@@ -1,6 +1,11 @@
 #bin/bash
-
 DIVIDER="*************************************************"
+
+# Check for root as there's quite some sudo commands
+if [[ "$EUID" > 0 ]]
+  then echo "Please run as root"
+  exit
+fi
 
 # Select which parts to execute
 echo "### Raspberry Home Setup ###"
@@ -37,7 +42,7 @@ then
   echo "Installing docker ..."
 
   curl -sSL https://get.docker.com | sh
-  sudo usermod -aG docker $USER
+  sudo usermod -aG docker abel
 fi
 
 # Set up the systemd service to start the docker-compose file
