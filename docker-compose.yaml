@@ -4,11 +4,6 @@ services:
     image: homebridge/homebridge:latest
     container_name: homebridge
     hostname: raspberrypi
-    logging:
-      driver: json-file
-      options:
-        max-file: 1
-        max-size: 10mb
     network_mode: host
     expose:
       - 8581/tcp
@@ -54,19 +49,6 @@ services:
       - /mnt/NAS/:/data
       - /home/abel/raspi-docker/docker-volumes/radarr/:/config
 
-  jackett:
-    image: linuxserver/jackett:arm32v7-0.21.352
-    container_name: jackett
-    environment:
-      - PUID=1003
-      - PGID=1023
-      - TZ=Etc/UTC
-    volumes:
-      - /home/abel/raspi-docker/docker-volumes/jackett/:/config
-      - /mnt/NAS/Downloads:/downloads
-    ports:
-      - 9117:9117
-    restart: unless-stopped
 
   bazarr:
     image: linuxserver/bazarr:arm32v7-1.2.2
