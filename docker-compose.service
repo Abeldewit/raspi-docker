@@ -6,9 +6,9 @@ Requires=docker.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-WorkingDirectory=/home/abel/raspi-docker
-ExecStart=/usr/bin/docker-compose -f /home/abel/raspi-docker/docker-compose.yaml up -d
-ExecStop=/usr/bin/docker-compose -f /home/abel/raspi-docker/docker-compose.yaml down
+WorkingDirectory=${DOCKER_COMPOSE_DIR}
+ExecStart=/usr/bin/docker-compose -f "${DOCKER_COMPOSE_DIR}/docker-compose.yaml" up -d
+ExecStop=/usr/bin/docker-compose -f "${DOCKER_COMPOSE_DIR}/docker-compose.yaml" down
 
 [Install]
 WantedBy=multi-user.target

@@ -36,13 +36,19 @@ sudo systemctl start docker.service
 # Set up the systemd service to start the docker-compose file
 echo "*************************************************"
 echo "Setting up systemctl for docker-compose file"
+
+# first set up the environment to hold the correct path to the project
+echo "export DOCKER_COMPOSE_DIR=$(pwd)" > /etc/profile.d/docker-compose-env.sh
+sudo chmod 775 /etc/profile.d/docker-compose-env.sh
+source /etc/profile.d/docker-compose-env.sh
+
+# next using the defined path, create the service to always boot the compose file
 sudo cat docker-compose.service > /etc/systemd/system/docker-compose.service
 sudo systemctl daemon-reload
 sudo systemctl enable docker-compose.service
 sudo systemctl start docker-compose.service
 
 # Set up the daily backup for the service config files
-# Add a daily cron job for your script
 (crontab -l ; echo "0 0 * * * $(pwd)/backup/backup-script.sh") | crontab -
 
 echo "Finished setup! Docker services are running"
