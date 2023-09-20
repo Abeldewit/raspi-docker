@@ -9,7 +9,7 @@ services:
       - 8581/tcp
     restart: always
     volumes:
-      - /home/abel/raspi-docker/docker-volumes/homebridge:/homebridge
+      - ./docker-volumes/homebridge:/homebridge
 
   sonarr:
     image: linuxserver/sonarr:latest
@@ -29,11 +29,11 @@ services:
       resources:
         limits:
           cpus: '0.40'
-          memory: 100M
+          memory: 50M
     restart: unless-stopped
     volumes:
       - /mnt/NAS/:/data
-      - /home/abel/raspi-docker/docker-volumes/sonarr/:/config
+      - ./docker-volumes/sonarr/:/config
     
   radarr:
     image: linuxserver/radarr:latest
@@ -53,11 +53,11 @@ services:
       resources:
         limits:
           cpus: '0.40'
-          memory: 100M
+          memory: 50M
     restart: unless-stopped
     volumes:
       - /mnt/NAS/:/data
-      - /home/abel/raspi-docker/docker-volumes/radarr/:/config
+      - ./docker-volumes/radarr/:/config
 
   bazarr:
     image: linuxserver/bazarr:latest
@@ -67,7 +67,7 @@ services:
       - PGID=1023
       - TZ=Etc/UTC
     volumes:
-      - /home/abel/raspi-docker/docker-volumes/bazarr:/config
+      - ./docker-volumes/bazarr:/config
       - /mnt/NAS/Movies:/movies
       - /mnt/NAS/Series:/tv
     ports:
@@ -85,9 +85,9 @@ services:
       resources:
         limits:
           cpus: '0.40'
-          memory: 100M
+          memory: 50M
     volumes:
-      - /home/abel/raspi-docker/docker-volumes/readarr:/config
+      - ./docker-volumes/readarr:/config
       - /mnt/NAS/Books:/books
       - /mnt/NAS/Downloads:/downloads
     ports:
@@ -102,7 +102,7 @@ services:
       - PGID=1023
       - TZ=Etc/UTC
     volumes:
-      - /home/abel/raspi-docker/docker-volumes/prowlarr:/config
+      - ./docker-volumes/prowlarr:/config
     ports:
       - 9696:9696
     restart: unless-stopped
