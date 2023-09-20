@@ -49,25 +49,25 @@ services:
       - /mnt/NAS/:/data
       - /home/abel/raspi-docker/docker-volumes/radarr/:/config
 
-  calibre:
-    image: linuxserver/calibre:latest
-    container_name: calibre
-    security_opt:
-      - seccomp:unconfined
-    environment:
-      - PUID=1003
-      - PGID=1023
-      - TZ=Etc/UTC
-      - CUSTOM_USER=admin
-    env_file: ./.calibre.env
-    volumes:
-      - /home/abel/raspi-docker/docker-volumes/calibre:/config
-      - /mnt/NAS/Books:/books
-    ports:
-      - 8080:8080
-      - 8181:8181
-      - 8081:8081
-    restart: unless-stopped
+  # calibre:
+  #   image: linuxserver/calibre:latest
+  #   container_name: calibre
+  #   security_opt:
+  #     - seccomp:unconfined
+  #   environment:
+  #     - PUID=1003
+  #     - PGID=1023
+  #     - TZ=Etc/UTC
+  #     - CUSTOM_USER=admin
+  #   env_file: ./.calibre.env
+  #   volumes:
+  #     - /home/abel/raspi-docker/docker-volumes/calibre:/config
+  #     - /mnt/NAS/Books:/books
+  #   ports:
+  #     - 8080:8080
+  #     - 8181:8181
+  #     - 8081:8081
+  #   restart: unless-stopped
 
   bazarr:
     image: linuxserver/bazarr:latest
