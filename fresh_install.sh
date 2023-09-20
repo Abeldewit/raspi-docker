@@ -20,6 +20,7 @@ read -p "Choice: " FLOW_CHOICE
 # Mount the NAS drive to the raspberry pi
 if [[ $FLOW_CHOICE == "1" ]] || [[ $FLOW_CHOICE == "6" ]]
 then
+  echo $DIVIDER
   echo "Mounting NAS"
   read -p "Enter NAS IP: " NAS_IP
   sudo mkdir /mnt/NAS
