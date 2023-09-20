@@ -18,7 +18,7 @@ echo "6. All of the above"
 read -p "Choice: " FLOW_CHOICE
 
 # Mount the NAS drive to the raspberry pi
-if [[ $FLOW_CHOICE == "1" ]] || [[ $FLOW_CHOICE == "6" ]]
+if [ $FLOW_CHOICE = "1" ] || [ $FLOW_CHOICE = "6" ]
 then
   echo $DIVIDER
   echo "Mounting NAS"
@@ -29,7 +29,7 @@ then
 fi
 
 # Update and install
-if [[ $FLOW_CHOICE == "2" ]] || [[ $FLOW_CHOICE == "6" ]]
+if [ $FLOW_CHOICE = "2" ] || [ $FLOW_CHOICE = "6" ]
 then
   echo $DIVIDER
   echo "Updating packages"
@@ -38,7 +38,7 @@ then
 fi
 
 # Install docker
-if [[ $FLOW_CHOICE == "3"]] || [[ $FLOW_CHOICE == "6" ]]
+if [ $FLOW_CHOICE = "3" ] || [ $FLOW_CHOICE = "6" ]
 then
   echo $DIVIDER
   echo "Installing docker ..."
@@ -48,7 +48,7 @@ then
 fi
 
 # Set up the systemd service to start the docker-compose file
-if [[ $FLOW_CHOICE == "4"]] || [[ $FLOW_CHOICE == "6" ]]
+if [ $FLOW_CHOICE = "4" ] || [ $FLOW_CHOICE = "6" ]
 then
   echo $DIVIDER
   echo "Setting up systemctl for docker-compose file"
@@ -64,7 +64,7 @@ then
 fi
 
 # Set up the daily backup for the service config files
-if [[ $FLOW_CHOICE == "5" ]] || [[ $FLOW_CHOICE == "6" ]]
+if [ $FLOW_CHOICE = "5" ] || [ $FLOW_CHOICE = "6" ]
 then
   echo $DIVIDER
   echo "Adding backup script to cron..."
