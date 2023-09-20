@@ -22,6 +22,7 @@ if [[ $FLOW_CHOICE == "1" ]] || [[ $FLOW_CHOICE == "6" ]]
 then
   echo "Mounting NAS"
   read -p "Enter NAS IP: " NAS_IP
+  sudo mkdir /mnt/NAS
   sudo echo "$NAS_IP:/volume1/Media /mnt/NAS nfs defaults 0 1" >> /etc/fstab
   sudo mount -a
 fi
