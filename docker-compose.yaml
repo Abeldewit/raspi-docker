@@ -85,7 +85,7 @@ services:
     restart: unless-stopped
 
   readarr:
-    image: linuxserver/readarr:latest
+    image: linuxserver/readarr:0.3.6-nightly
     container_name: readarr
     environment:
       - PUID=1005
