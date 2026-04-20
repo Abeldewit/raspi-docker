@@ -1,129 +1,138 @@
-version: "3.6"
+networks:
+  raspi-docker_default:
+    external: true
+    name: "raspi-docker_default"
+
+
+
 services:
-  homebridge:
-    image: homebridge/homebridge:latest
-    container_name: homebridge
-    hostname: raspberrypi
-    network_mode: host
+
+  brandstof-berkenaar:
+    command:
+      - "pdm"
+      - "run"
+      - "streamlit"
+      - "run"
+      - "dashboard.py"
+    container_name: "brandstof-berkenaar"
+    image: "brandstof-berekenaar:latest" # TODO: This is a build
+    ipc: "private"
+    network_mode: "bridge"
+    ports:
+      - "8501:8501/tcp"
+    restart: "unless-stopped"
+
+  duplicati:
+    container_name: "duplicati"
+    environment:
+      - "TZ=Europe/Amsterdam"
+      - "PUID=1000"
+      - "PGID=1000"
+    image: "linuxserver/duplicati:latest"
+    network_mode: "bridge"
+    ports:
+      - "8200:8200/tcp"
+    restart: "unless-stopped"
+    volumes:
+      - "/home/abel/docker-volumes/duplicati/config:/config"
+      - "/home/abel/docker-volumes:/source"
+      - "/mnt/NAS/Backups/duplicati:/backups"
+
+  esphome:
+    container_name: "esphome"
+    command:
+      - "dashboard"
+      - "/config"
+    entrypoint:
+      - "/entrypoint.sh"
+    image: "esphome/esphome:latest"
+    network_mode: "bridge"
+    ports:
+      - "6052:6052/tcp"
+    restart: "unless-stopped"
+    volumes:
+      - "/home/abel/docker-volumes/esphome:/config"
+    environment:
+      USERNAME: "${ESPHOME_USERNAME}"
+      PASSWORD: "${ESPHOME_PASSWORD}"
+
+  homeassistant:
+    container_name: "homeassistant"
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    environment:
+      - "TZ=Europe/Amsterdam"
+    hostname: "pietje-1"
+    image: "ghcr.io/home-assistant/home-assistant:stable"
+    network_mode: "host"
+    privileged: true
+    restart: "unless-stopped"
+    security_opt:
+      - "label=disable"
+    volumes:
+      - "/dev:/dev"
+      - "/home/abel/docker-volumes/homeassistant:/config"
+      - "/run/dbus:/run/dbus:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+  influxdb:
+    container_name: "influxdb"
+    environment:
+      - "DOCKER_INFLUXDB_INIT_MODE=setup"
+      - "DOCKER_INFLUXDB_INIT_BUCKET=ha_insights"
+    env_file:
+      - /home/abel/raspi-docker/.env
+    image: "influxdb:latest"
+    networks:
+      - "raspi-docker_default"
+    ports:
+      - "8086:8086/tcp"
+    restart: "unless-stopped"
+    volumes:
+      - "/home/abel/docker-volumes/influxdb/config:/etc/influxdb2"
+      - "/home/abel/docker-volumes/influxdb/data:/var/lib/influxdb2"
+
+  matter-server:
+    container_name: "matter-server"
     expose:
-      - 8581/tcp
-    restart: always
+      - "5580/tcp"
+    hostname: "pietje-1"
+    image: "ghcr.io/matter-js/python-matter-server:stable"
+    network_mode: "host"
+    restart: "unless-stopped"
+    security_opt:
+      - "apparmor=unconfined"
     volumes:
-      - ./docker-volumes/homebridge:/homebridge
+      - "/home/abel/docker-volumes/matter-server:/data"
 
-  sonarr:
-    image: linuxserver/sonarr:latest
-    container_name: sonarr
-    ipc: private
-    logging:
-      driver: json-file
-      options: {}
-    network_mode: bridge
+  mosquitto:
+    container_name: "mosquitto"
+    image: "eclipse-mosquitto:latest"
+    network_mode: "bridge"
     ports:
-      - 8989:8989
-    environment:
-      - PUID=1001
-      - PGID=1023
-      - TZ=Etc/UTC
-    deploy:
-      resources:
-        limits:
-          cpus: '0.40'
-          memory: 50M
-    restart: unless-stopped
+      - "1883:1883/tcp"
+      - "9001:9001/tcp"
+    restart: "unless-stopped"
     volumes:
-      - /mnt/NAS/:/data
-      - ./docker-volumes/sonarr/:/config
-    
-  radarr:
-    image: linuxserver/radarr:latest
-    container_name: radarr
-    ipc: private
-    logging:
-      driver: json-file
-      options: {}
-    network_mode: bridge
-    ports:
-      - 7878:7878
-    environment:
-      - PUID=1002
-      - PGID=1023
-      - TZ=Etc/UTC
-    deploy:
-      resources:
-        limits:
-          cpus: '0.40'
-          memory: 50M
-    restart: unless-stopped
-    volumes:
-      - /mnt/NAS/:/data
-      - ./docker-volumes/radarr/:/config
+      - "/home/abel/docker-volumes/mosquitto/config:/mosquitto/config"
+      - "/home/abel/docker-volumes/mosquitto/data:/mosquitto/data"
+      - "/home/abel/docker-volumes/mosquitto/log:/mosquitto/log"
 
-  bazarr:
-    image: linuxserver/bazarr:latest
-    container_name: bazarr
-    environment:
-      - PUID=1004
-      - PGID=1023
-      - TZ=Etc/UTC
-    volumes:
-      - ./docker-volumes/bazarr:/config
-      - /mnt/NAS/Movies:/movies
-      - /mnt/NAS/Series:/tv
-    ports:
-      - 6767:6767
-    restart: unless-stopped
+    working_dir: "/"
 
-  readarr:
-    image: linuxserver/readarr:0.3.6-nightly
-    container_name: readarr
+  zigbee2mqtt:
+    container_name: "zigbee2mqtt"
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
     environment:
-      - PUID=1005
-      - PGID=1023
-      - TZ=Etc/UTC
-    deploy:
-      resources:
-        limits:
-          cpus: '0.40'
-          memory: 50M
-    volumes:
-      - ./docker-volumes/readarr:/config
-      - /mnt/NAS/Books:/books
-      - /mnt/NAS/Downloads:/downloads
+      - "TZ=Europe/Amsterdam"
+    image: "koenkk/zigbee2mqtt:latest"
+    network_mode: "bridge"
     ports:
-      - 8787:8787
-    restart: unless-stopped
-
-  prowlarr:
-    image: linuxserver/prowlarr:latest
-    container_name: prowlarr
-    environment:
-      - PUID=1006
-      - PGID=1023
-      - TZ=Etc/UTC
+      - "8080:8080/tcp"
+    restart: "unless-stopped"
     volumes:
-      - ./docker-volumes/prowlarr:/config
-    ports:
-      - 9696:9696
-    restart: unless-stopped
+      - "/home/abel/docker-volumes/zigbee2mqtt/data:/app/data"
+      - "/run/udev:/run/udev:ro"
 
-  flaresolverr:
-    image: ghcr.io/flaresolverr/flaresolverr:latest
-    container_name: flaresolverr
-    environment:
-      - LOG_LEVEL=info
-    ports:
-      - 8191:8191
-    restart: unless-stopped
-
-  tailscale:
-    image: tailscale/tailscale
-    container_name: tailscaled
-    network_mode: host
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-    env_file: ./.tailscale.env
-    volumes:
-      - /dev/net/tun:/dev/net/tun
-      - /var/lib:/var/lib
+version: "3.6"
