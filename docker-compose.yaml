@@ -28,6 +28,8 @@ services:
       - "TZ=Europe/Amsterdam"
       - "PUID=1000"
       - "PGID=1000"
+      - "SETTINGS_ENCRYPTION_KEY=DUPLICATI_ENCRYPTION_KEY"
+      - "DUPLICATI__WEBSERVICE_PASSWORD=DUPLICATI_ADMIN_PASSWORD"
     image: "linuxserver/duplicati:latest"
     network_mode: "bridge"
     ports:
