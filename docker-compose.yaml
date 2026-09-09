@@ -1,24 +1,53 @@
-networks:
-  raspi-docker_default:
-    external: true
-    name: "raspi-docker_default"
-
-
 services:
-  brandstof-berkenaar:
-    command:
-      - "pdm"
-      - "run"
-      - "streamlit"
-      - "run"
-      - "dashboard.py"
-    container_name: "brandstof-berkenaar"
-    image: "brandstof-berekenaar:latest" # TODO: This is a build
-    ipc: "private"
-    network_mode: "bridge"
+  audiobookshelf:
+    container_name: audiobookshelf
+    image: ghcr.io/advplyr/audiobookshelf:latest
+    # ABS runs on port 13378 by default. If you want to change
+    # the port, only change the external port
     ports:
-      - "8501:8501/tcp"
-    restart: "unless-stopped"
+      - 13378:80
+    volumes:
+      - /home/docker/docker-volumes/audiobookshelf:/config
+      - /home/docker/docker-volumes/audiobookshelf:/metadata
+      - /mnt/NAS/Audio/audiobooks/:/audiobooks
+      - /mnt/NAS/Audio/podcasts/:/podcasts
+    environment:
+      - TZ=America/Toronto
+    restart: unless-stopped
+
+  webdav:
+    image: hacdias/webdav:latest
+    container_name: webdav
+    ports:
+      - "7201:6065"
+    volumes:
+      - /home/docker/docker-volumes/webdav/data:/data
+      - /home/docker/docker-volumes/webdav/config.yml:/config.yml:ro
+    command: ["-c", "/config.yml"]
+    restart: unless-stopped
+
+  pihole:
+    image: pihole/pihole:latest
+    container_name: pihole
+    network_mode: host
+    environment:
+      TZ: Europe/Amsterdam
+      WEBPASSWORD: yourpassword
+    volumes:
+      - /home/docker/docker-volumes/pihole/pihole:/etc/pihole
+      - /home/docker/docker-volumes/pihole/dnsmasq.d:/etc/dnsmasq.d
+    restart: unless-stopped
+
+#  Work in progress
+#  ha-ipaper:
+#    container_name: ha-ipaper
+#    environment:
+#      - "HA_IPAPER_GENERAL__homeassistant_url=http://127.0.0.1:423"
+#      - "HA_IPAPER_GENERAL__homeassistant_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI0N2UxMGVlNDhjM2M0ZDI5YWJkYmUzN2U5MzA3MTQyMSIsImlhdCI6MTc3ODYxNzUzMCwiZXhwIjoyMDkzOTc3NTMwfQ.XPEhMOg73zfWVua5DI4kzLBE5CW_74r33UmwZgu1sug"
+#    build:
+#      context: "/home/docker/ha-ipaper/"
+#      dockerfile: "docker/Dockerfile"
+#    network_mode: "host"
 
   duplicati:
     container_name: "duplicati"
@@ -26,16 +55,16 @@ services:
       - "TZ=Europe/Amsterdam"
       - "PUID=1000"
       - "PGID=1000"
-      - "SETTINGS_ENCRYPTION_KEY=DUPLICATI_ENCRYPTION_KEY"
-      - "DUPLICATI__WEBSERVICE_PASSWORD=DUPLICATI_ADMIN_PASSWORD"
+      - "SETTINGS_ENCRYPTION_KEY=${DUPLICATI_ENCRYPTION_KEY}"
+      - "DUPLICATI__WEBSERVICE_PASSWORD=${DUPLICATI_ADMIN_PASSWORD}"
     image: "linuxserver/duplicati:latest"
     network_mode: "bridge"
     ports:
       - "8200:8200/tcp"
     restart: "unless-stopped"
     volumes:
-      - "/home/abel/docker-volumes/duplicati/config:/config"
-      - "/home/abel/docker-volumes:/source"
+      - "/home/docker/docker-volumes/duplicati/config:/config"
+      - "/home/docker/docker-volumes:/source"
       - "/mnt/NAS/Backups/duplicati:/backups"
 
   esphome:
@@ -51,10 +80,10 @@ services:
       - "6052:6052/tcp"
     restart: "unless-stopped"
     volumes:
-      - "/home/abel/docker-volumes/esphome:/config"
+      - "/home/docker/docker-volumes/esphome:/config"
     environment:
-      USERNAME: "${ESPHOME_USERNAME}"
-      PASSWORD: "${ESPHOME_PASSWORD}"
+      - "USERNAME=ESPHOME_USERNAME"
+      - "PASSWORD=ESPHOME_PASSWORD"
 
   homeassistant:
     container_name: "homeassistant"
@@ -71,7 +100,7 @@ services:
       - "label=disable"
     volumes:
       - "/dev:/dev"
-      - "/home/abel/docker-volumes/homeassistant:/config"
+      - "/home/docker/docker-volumes/homeassistant:/config"
       - "/run/dbus:/run/dbus:ro"
       - "/var/run/docker.sock:/var/run/docker.sock"
 
@@ -81,16 +110,14 @@ services:
       - "DOCKER_INFLUXDB_INIT_MODE=setup"
       - "DOCKER_INFLUXDB_INIT_BUCKET=ha_insights"
     env_file:
-      - /home/abel/raspi-docker/.env
+      - "/home/docker/raspi-docker/.env"
     image: "influxdb:latest"
-    networks:
-      - "raspi-docker_default"
     ports:
       - "8086:8086/tcp"
     restart: "unless-stopped"
     volumes:
-      - "/home/abel/docker-volumes/influxdb/config:/etc/influxdb2"
-      - "/home/abel/docker-volumes/influxdb/data:/var/lib/influxdb2"
+      - "/home/docker/docker-volumes/influxdb/config:/etc/influxdb2"
+      - "/home/docker/docker-volumes/influxdb/data:/var/lib/influxdb2"
 
   matter-server:
     container_name: "matter-server"
@@ -103,36 +130,43 @@ services:
     security_opt:
       - "apparmor=unconfined"
     volumes:
-      - "/home/abel/docker-volumes/matter-server:/data"
+      - "/home/docker/docker-volumes/matter-server:/data"
 
   mosquitto:
     container_name: "mosquitto"
     image: "eclipse-mosquitto:latest"
-    network_mode: "bridge"
+    networks:
+      - zigbee
     ports:
       - "1883:1883/tcp"
       - "9001:9001/tcp"
     restart: "unless-stopped"
     volumes:
-      - "/home/abel/docker-volumes/mosquitto/config:/mosquitto/config"
-      - "/home/abel/docker-volumes/mosquitto/data:/mosquitto/data"
-      - "/home/abel/docker-volumes/mosquitto/log:/mosquitto/log"
+      - "/home/docker/docker-volumes/mosquitto/config:/mosquitto/config"
+      - "/home/docker/docker-volumes/mosquitto/data:/mosquitto/data"
+      - "/home/docker/docker-volumes/mosquitto/log:/mosquitto/log"
 
     working_dir: "/"
 
   zigbee2mqtt:
     container_name: "zigbee2mqtt"
+    depends_on:
+      - "mosquitto"
     devices:
       - "/dev/ttyUSB0:/dev/ttyUSB0"
     environment:
       - "TZ=Europe/Amsterdam"
     image: "koenkk/zigbee2mqtt:latest"
-    network_mode: "bridge"
+    networks:
+      - zigbee
     ports:
       - "8080:8080/tcp"
     restart: "unless-stopped"
     volumes:
-      - "/home/abel/docker-volumes/zigbee2mqtt/data:/app/data"
+      - "/home/docker/docker-volumes/zigbee2mqtt/data:/app/data"
       - "/run/udev:/run/udev:ro"
 
-version: "3.6"
+
+networks:
+  zigbee:
+    driver: bridge
