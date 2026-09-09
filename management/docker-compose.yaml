@@ -28,3 +28,32 @@ services:
       - "/home/docker/docker-volumes/duplicati/config:/config"
       - "/home/docker/docker-volumes:/source"
       - "/mnt/NAS/Backups/duplicati:/backups"
+
+  arcane:
+    image: ghcr.io/getarcaneapp/manager:latest
+    container_name: arcane
+    ports:
+      - '3552:3552'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - arcane-data:/app/data
+      - /home/docker/:/home
+    environment:
+      - ENCRYPTION_KEY=aa1dad156779973e40fffaa1ebb3924087327e325a97a347c48d3511b14a4ba0
+      - TZ=UTC
+    cgroup: host
+    restart: unless-stopped
+
+  9router:
+    image: decolua/9router:latest
+    container_name: 9router
+    ports:
+      - 20128:20128
+    volumes:
+      - "/home/docker-volumes/9router/data:/data"
+    environment:
+      - "INITIAL_PASSWORD=${ROUTER_9_PASSWORD}"
+    restart: "unless-stopped"
+
+volumes:
+  arcane-data:

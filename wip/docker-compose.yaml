@@ -1,5 +1,5 @@
+# Stack for trying out new services before giving them a permanent home
 services:
-#  Work in progress
 #  ha-ipaper:
 #    container_name: ha-ipaper
 #    environment:
