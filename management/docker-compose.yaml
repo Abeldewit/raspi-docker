@@ -1,0 +1,30 @@
+services:
+  pihole:
+    image: pihole/pihole:latest
+    container_name: pihole
+    network_mode: host
+    environment:
+      TZ: Europe/Amsterdam
+      WEBPASSWORD: yourpassword
+    volumes:
+      - /home/docker/docker-volumes/pihole/pihole:/etc/pihole
+      - /home/docker/docker-volumes/pihole/dnsmasq.d:/etc/dnsmasq.d
+    restart: unless-stopped
+  
+  duplicati:
+    container_name: "duplicati"
+    environment:
+      - "TZ=Europe/Amsterdam"
+      - "PUID=1000"
+      - "PGID=1000"
+      - "SETTINGS_ENCRYPTION_KEY=${DUPLICATI_ENCRYPTION_KEY}"
+      - "DUPLICATI__WEBSERVICE_PASSWORD=${DUPLICATI_ADMIN_PASSWORD}"
+    image: "linuxserver/duplicati:latest"
+    network_mode: "bridge"
+    ports:
+      - "8200:8200/tcp"
+    restart: "unless-stopped"
+    volumes:
+      - "/home/docker/docker-volumes/duplicati/config:/config"
+      - "/home/docker/docker-volumes:/source"
+      - "/mnt/NAS/Backups/duplicati:/backups"

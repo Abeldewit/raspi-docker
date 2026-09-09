@@ -1,0 +1,27 @@
+services:
+  audiobookshelf:
+    container_name: audiobookshelf
+    image: ghcr.io/advplyr/audiobookshelf:latest
+    # ABS runs on port 13378 by default. If you want to change
+    # the port, only change the external port
+    ports:
+      - 13378:80
+    volumes:
+      - /home/docker/docker-volumes/audiobookshelf:/config
+      - /home/docker/docker-volumes/audiobookshelf:/metadata
+      - /mnt/NAS/Audio/audiobooks/:/audiobooks
+      - /mnt/NAS/Audio/podcasts/:/podcasts
+    environment:
+      - TZ=America/Toronto
+    restart: unless-stopped
+
+  webdav:
+    image: hacdias/webdav:latest
+    container_name: webdav
+    ports:
+      - "7201:6065"
+    volumes:
+      - /home/docker/docker-volumes/webdav/data:/data
+      - /home/docker/docker-volumes/webdav/config.yml:/config.yml:ro
+    command: ["-c", "/config.yml"]
+    restart: unless-stopped

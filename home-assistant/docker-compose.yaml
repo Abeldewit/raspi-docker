@@ -1,0 +1,103 @@
+services:
+  homeassistant:
+    container_name: "homeassistant"
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    environment:
+      - "TZ=Europe/Amsterdam"
+    hostname: "pietje-1"
+    image: "ghcr.io/home-assistant/home-assistant:stable"
+    network_mode: "host"
+    privileged: true
+    restart: "unless-stopped"
+    security_opt:
+      - "label=disable"
+    volumes:
+      - "/dev:/dev"
+      - "/home/docker/docker-volumes/homeassistant:/config"
+      - "/run/dbus:/run/dbus:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+  influxdb:
+    container_name: "influxdb"
+    environment:
+      - "DOCKER_INFLUXDB_INIT_MODE=setup"
+      - "DOCKER_INFLUXDB_INIT_BUCKET=ha_insights"
+    env_file:
+      - "/home/docker/raspi-docker/.env"
+    image: "influxdb:latest"
+    ports:
+      - "8086:8086/tcp"
+    restart: "unless-stopped"
+    volumes:
+      - "/home/docker/docker-volumes/influxdb/config:/etc/influxdb2"
+      - "/home/docker/docker-volumes/influxdb/data:/var/lib/influxdb2"
+
+  matter-server:
+    container_name: "matter-server"
+    expose:
+      - "5580/tcp"
+    hostname: "pietje-1"
+    image: "ghcr.io/matter-js/python-matter-server:stable"
+    network_mode: "host"
+    restart: "unless-stopped"
+    security_opt:
+      - "apparmor=unconfined"
+    volumes:
+      - "/home/docker/docker-volumes/matter-server:/data"
+
+  mosquitto:
+    container_name: "mosquitto"
+    image: "eclipse-mosquitto:latest"
+    networks:
+      - zigbee
+    ports:
+      - "1883:1883/tcp"
+      - "9001:9001/tcp"
+    restart: "unless-stopped"
+    volumes:
+      - "/home/docker/docker-volumes/mosquitto/config:/mosquitto/config"
+      - "/home/docker/docker-volumes/mosquitto/data:/mosquitto/data"
+      - "/home/docker/docker-volumes/mosquitto/log:/mosquitto/log"
+
+    working_dir: "/"
+
+  zigbee2mqtt:
+    container_name: "zigbee2mqtt"
+    depends_on:
+      - "mosquitto"
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    environment:
+      - "TZ=Europe/Amsterdam"
+    image: "koenkk/zigbee2mqtt:latest"
+    networks:
+      - zigbee
+    ports:
+      - "8080:8080/tcp"
+    restart: "unless-stopped"
+    volumes:
+      - "/home/docker/docker-volumes/zigbee2mqtt/data:/app/data"
+      - "/run/udev:/run/udev:ro"
+
+  esphome:
+    container_name: "esphome"
+    command:
+      - "dashboard"
+      - "/config"
+    entrypoint:
+      - "/entrypoint.sh"
+    image: "esphome/esphome:latest"
+    network_mode: "bridge"
+    ports:
+      - "6052:6052/tcp"
+    restart: "unless-stopped"
+    volumes:
+      - "/home/docker/docker-volumes/esphome:/config"
+    environment:
+      - "USERNAME=ESPHOME_USERNAME"
+      - "PASSWORD=ESPHOME_PASSWORD"
+
+networks:
+  zigbee:
+    driver: bridge
