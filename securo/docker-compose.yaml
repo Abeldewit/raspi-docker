@@ -1,0 +1,156 @@
+services:
+  securo-db:
+    image: docker.io/pgvector/pgvector:pg16
+    container_name: securo-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: securo
+    volumes:
+      - /home/docker/docker-volumes/securo/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  securo-redis:
+    image: docker.io/library/redis:8-alpine
+    container_name: securo-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  securo-backend:
+    image: ghcr.io/securo-finance/securo-backend:latest
+    container_name: securo-backend
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    depends_on:
+      securo-db: { condition: service_healthy }
+      securo-redis: { condition: service_healthy }
+    ports:
+      - "8010:8000"
+    environment:
+      TZ: Europe/Amsterdam
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@securo-db:5432/securo
+      SECRET_KEY: ${SECURO_SECRET_KEY}
+      DEBUG: "false"
+      FRONTEND_URL: http://localhost:3011
+      REDIS_URL: redis://securo-redis:6379/0
+      STORAGE_LOCAL_PATH: /app/data/attachments
+      AGENTS_KNOWLEDGE_STORAGE_PATH: /app/data/agent_knowledge
+      # Banking integrations
+      PLUGGY_CLIENT_ID: ${PLUGGY_CLIENT_ID:-}
+      PLUGGY_CLIENT_SECRET: ${PLUGGY_CLIENT_SECRET:-}
+      PLUGGY_OAUTH_REDIRECT_URI: ${PLUGGY_OAUTH_REDIRECT_URI:-}
+      ENABLE_BANKING_APP_ID: ${ENABLE_BANKING_APP_ID:-}
+      ENABLE_BANKING_PRIVATE_KEY_FILE: /app/secrets/enable_banking_private.pem
+      ENABLE_BANKING_API_URL: https://api.enablebanking.com
+      ENABLE_BANKING_OAUTH_REDIRECT_URI: ${ENABLE_BANKING_OAUTH_REDIRECT_URI:-}
+      SIMPLEFIN_ENABLED: ${SIMPLEFIN_ENABLED:-false}
+      SIMPLEFIN_API_URL: https://beta-bridge.simplefin.org
+      # Agents / MCP — enabled, provider left empty until you decide (Ollama/OpenAI/Anthropic)
+      AGENTS_ENABLED: "true"
+      AGENTS_BUILTIN_MCP_URL: http://securo-mcp:8765/mcp
+      AGENTS_MCP_JWT_SECRET: ${SECURO_MCP_JWT_SECRET}
+      AGENTS_MCP_EXTERNAL_TTL_DAYS: "90"
+      AGENTS_DEFAULT_PROVIDER: ${AGENTS_DEFAULT_PROVIDER:-}
+      AGENTS_DEFAULT_MODEL: ${AGENTS_DEFAULT_MODEL:-}
+      AGENTS_OLLAMA_BASE_URL: ${AGENTS_OLLAMA_BASE_URL:-}
+      AGENTS_OPENAI_API_KEY: ${AGENTS_OPENAI_API_KEY:-}
+      AGENTS_ANTHROPIC_API_KEY: ${AGENTS_ANTHROPIC_API_KEY:-}
+      AGENTS_EMBEDDING_PROVIDER: native
+    volumes:
+      - /home/docker/docker-volumes/securo/secrets:/app/secrets:ro
+      - /home/docker/docker-volumes/securo/attachments:/app/data/attachments
+      - /home/docker/docker-volumes/securo/agent_knowledge:/app/data/agent_knowledge
+      - /home/docker/docker-volumes/securo/embedding_models:/app/data/embedding_models
+    restart: unless-stopped
+
+  securo-frontend:
+    image: ghcr.io/securo-finance/securo-frontend:latest
+    container_name: securo-frontend
+    ports:
+      - "3011:8080"
+    environment:
+      BACKEND_URL: http://securo-backend:8000
+      FRONTEND_URL: http://localhost:3011
+    depends_on:
+      - securo-backend
+    restart: unless-stopped
+
+  securo-celery-worker:
+    image: ghcr.io/securo-finance/securo-backend:latest
+    container_name: securo-celery-worker
+    command: celery -A app.worker worker --loglevel=info --concurrency=2
+    depends_on:
+      securo-db: { condition: service_healthy }
+      securo-redis: { condition: service_healthy }
+    environment:
+      TZ: Europe/Amsterdam
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@securo-db:5432/securo
+      SECRET_KEY: ${SECURO_SECRET_KEY}
+      REDIS_URL: redis://securo-redis:6379/0
+      STORAGE_LOCAL_PATH: /app/data/attachments
+      AGENTS_KNOWLEDGE_STORAGE_PATH: /app/data/agent_knowledge
+      AGENTS_ENABLED: "true"
+      AGENTS_MCP_JWT_SECRET: ${SECURO_MCP_JWT_SECRET}
+    volumes:
+      - /home/docker/docker-volumes/securo/secrets:/app/secrets:ro
+      - /home/docker/docker-volumes/securo/attachments:/app/data/attachments
+      - /home/docker/docker-volumes/securo/agent_knowledge:/app/data/agent_knowledge
+      - /home/docker/docker-volumes/securo/embedding_models:/app/data/embedding_models
+    restart: unless-stopped
+
+  securo-celery-beat:
+    image: ghcr.io/securo-finance/securo-backend:latest
+    container_name: securo-celery-beat
+    command: celery -A app.worker beat --loglevel=info
+    depends_on:
+      securo-db: { condition: service_healthy }
+      securo-redis: { condition: service_healthy }
+    environment:
+      TZ: Europe/Amsterdam
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@securo-db:5432/securo
+      SECRET_KEY: ${SECURO_SECRET_KEY}
+      REDIS_URL: redis://securo-redis:6379/0
+      STORAGE_LOCAL_PATH: /app/data/attachments
+      AGENTS_KNOWLEDGE_STORAGE_PATH: /app/data/agent_knowledge
+      AGENTS_ENABLED: "true"
+      AGENTS_MCP_JWT_SECRET: ${SECURO_MCP_JWT_SECRET}
+    volumes:
+      - /home/docker/docker-volumes/securo/secrets:/app/secrets:ro
+      - /home/docker/docker-volumes/securo/attachments:/app/data/attachments
+      - /home/docker/docker-volumes/securo/agent_knowledge:/app/data/agent_knowledge
+      - /home/docker/docker-volumes/securo/embedding_models:/app/data/embedding_models
+    restart: unless-stopped
+
+  securo-mcp:
+    image: ghcr.io/securo-finance/securo-backend:latest
+    container_name: securo-mcp
+    profiles: [agents]
+    command: uvicorn mcp_server.main:app --host 0.0.0.0 --port 8765
+    depends_on:
+      securo-db: { condition: service_healthy }
+      securo-redis: { condition: service_healthy }
+    ports:
+      - "127.0.0.1:8765:8765"
+    environment:
+      TZ: Europe/Amsterdam
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@securo-db:5432/securo
+      SECRET_KEY: ${SECURO_SECRET_KEY}
+      REDIS_URL: redis://securo-redis:6379/0
+      STORAGE_LOCAL_PATH: /app/data/attachments
+      AGENTS_KNOWLEDGE_STORAGE_PATH: /app/data/agent_knowledge
+      AGENTS_ENABLED: "true"
+      AGENTS_MCP_JWT_SECRET: ${SECURO_MCP_JWT_SECRET}
+    volumes:
+      - /home/docker/docker-volumes/securo/secrets:/app/secrets:ro
+      - /home/docker/docker-volumes/securo/attachments:/app/data/attachments
+      - /home/docker/docker-volumes/securo/agent_knowledge:/app/data/agent_knowledge
+      - /home/docker/docker-volumes/securo/embedding_models:/app/data/embedding_models
+    restart: unless-stopped
