@@ -10,7 +10,7 @@ services:
       - /home/docker/docker-volumes/pihole/pihole:/etc/pihole
       - /home/docker/docker-volumes/pihole/dnsmasq.d:/etc/dnsmasq.d
     restart: unless-stopped
-  
+
   duplicati:
     container_name: "duplicati"
     environment:
@@ -36,8 +36,9 @@ services:
       - '3552:3552'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - arcane-data:/app/data
-      - /home/docker/:/home
+      - /home/docker/docker-volumes/arcane/data:/app/data
+      - /home/docker/docker-volumes:/home/docker/docker-volumes
+      - /home/docker/raspi-docker:/home/docker/raspi-docker
     environment:
       - ENCRYPTION_KEY=aa1dad156779973e40fffaa1ebb3924087327e325a97a347c48d3511b14a4ba0
       - TZ=UTC
