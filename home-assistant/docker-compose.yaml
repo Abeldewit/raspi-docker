@@ -88,15 +88,29 @@ services:
     entrypoint:
       - "/entrypoint.sh"
     image: "esphome/esphome:latest"
-    network_mode: "bridge"
+    network_mode: "host"
     ports:
       - "6052:6052/tcp"
     restart: "unless-stopped"
     volumes:
       - "/home/docker/docker-volumes/esphome:/config"
     environment:
-      - "USERNAME=ESPHOME_USERNAME"
-      - "PASSWORD=ESPHOME_PASSWORD"
+      - "ESPHOME_USERNAME=${ESPHOME_USERNAME}"
+      - "ESPHOME_PASSWORD=${ESPHOME_PASSWORD}"
+
+  tommy:
+    image: tommysense/virtual-bridge:latest
+    container_name: tommy
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      DASHBOARD_PORT: 8089          # Web Dashboard
+      FILE_SERVER_HTTP_PORT: 8090   # Configuration file and OTA
+      FILE_SERVER_HTTPS_PORT: 8091  # Configuration file and OTA
+      MQTT_PORT: 1886               # Built-in MQTT broker
+      UDP_RELAY_PORT: 8547          # Device communication
+    volumes:
+      - "/home/docker/docker-volumes/tommy:/data"
 
 networks:
   zigbee:
