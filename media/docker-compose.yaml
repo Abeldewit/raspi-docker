@@ -25,3 +25,32 @@ services:
       - /home/docker/docker-volumes/webdav/config.yml:/config.yml:ro
     command: ["-c", "/config.yml"]
     restart: unless-stopped
+
+  calibre-web-automated:
+    image: crocodilestick/calibre-web-automated:latest
+    container_name: calibre-web-automated
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Amsterdam
+    volumes:
+      - /home/docker/docker-volumes/calibre-web-automated/config:/config
+      - /home/docker/docker-volumes/webdav/data/books-ingest:/cwa-book-ingest
+      - /home/docker/docker-volumes/calibre-web-automated/library:/calibre-library
+    ports:
+      - 8083:8083
+    restart: unless-stopped
+
+  shelfmark:
+    image: ghcr.io/calibrain/shelfmark:latest
+    container_name: shelfmark
+    restart: unless-stopped
+    ports:
+      - "8084:8084"                     # Web UI port
+    environment:
+      - PUID=1000                       # User ID for file permissions
+      - PGID=1000                       # Group ID for file permissions
+      - TZ=Europe/London                # Your timezone (optional)
+    volumes:
+      - /home/docker/docker-volumes/shelfmark/config:/config          # Settings, database, cover cache
+      - /home/docker/docker-volumes/webdav/data/books-ingest:/books
