@@ -15,8 +15,8 @@ services:
     container_name: "duplicati"
     environment:
       - "TZ=Europe/Amsterdam"
-      - "PUID=1000"
-      - "PGID=1000"
+      - "PUID=0"
+      - "PGID=0"
       - "SETTINGS_ENCRYPTION_KEY=${DUPLICATI_ENCRYPTION_KEY}"
       - "DUPLICATI__WEBSERVICE_PASSWORD=${DUPLICATI_ADMIN_PASSWORD}"
     image: "linuxserver/duplicati:latest"
@@ -25,9 +25,9 @@ services:
       - "8200:8200/tcp"
     restart: "unless-stopped"
     volumes:
-      - "/home/docker/docker-volumes/duplicati/config:/config"
-      - "/home/docker/docker-volumes:/source"
-      - "/mnt/NAS/Backups/duplicati:/backups"
+      - /home/docker/docker-volumes/duplicati/config:/config
+      - /home/docker/docker-volumes:/source:ro
+      - /mnt/NAS/Backups/duplicati:/backups
 
   arcane:
     image: ghcr.io/getarcaneapp/manager:latest
@@ -51,9 +51,10 @@ services:
     ports:
       - 20128:20128
     volumes:
-      - "/home/docker-volumes/9router/data:/data"
+      - /home/docker/docker-volumes/9router/data:/app/data
     environment:
       - "INITIAL_PASSWORD=${ROUTER_9_PASSWORD}"
+      - "DATA_DIR=/app/data"
     restart: "unless-stopped"
 
 volumes:
